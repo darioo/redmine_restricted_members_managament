@@ -8,6 +8,7 @@ You can select which roles are avaible for people with particular roles.
 For example:
 
 Project Manager can add: Developers, Testers, Designers Tech Leads
+
 Tech Leads can add only Developers
 
 

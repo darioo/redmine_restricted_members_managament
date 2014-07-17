@@ -1,0 +1,37 @@
+<%- @settings[:restricted_members_table] = {} if @settings[:restricted_members_table].nil? -%>
+
+<% @roles = Role.sorted.all %>
+
+<% if @roles.any? %>
+<table class="list ">
+  <thead><tr>
+  <th><%=l(:label_role)%></th>
+  <th></th>
+  </tr></thead>
+  <tbody>
+<% @roles.each do |role_with_permission| %>
+ <% if role_with_permission.has_permission? ( :manage_members ) %>
+  <tr class="<%= cycle 'odd', 'even' %>">
+    <td class="name"><%= role_with_permission.name %></td>
+    <td class="buttons">
+	<p>
+	<% @roles.each do |role| %>
+	<% unless role.builtin? %>
+		<label>  
+		<%- @settings[:restricted_members_table][role_with_permission.id.to_s] = {} if @settings[:restricted_members_table][role_with_permission.id.to_s].nil? -%>
+		<%= check_box_tag "settings[restricted_members_table][#{role_with_permission.id}][#{role.id}]", 1, @settings[:restricted_members_table][role_with_permission.id.to_s][role.id.to_s] %>
+		<%= role.name %>
+		</label>
+	</br>
+		<% end %>
+	<% end %>
+	</p>
+    </td>
+  </tr>
+ <% end %>
+<% end %>
+  </tbody>
+</table>
+<% else %>
+<p class="nodata"><%= l(:label_no_data) %></p>
+<% end %>

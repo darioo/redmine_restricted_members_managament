@@ -1,0 +1,130 @@
+<%= error_messages_for 'member' %>
+<% 
+
+users_by_role = @project.users_by_role 
+current_user = User.current.id
+
+current_user_roles = []
+
+users_by_role.keys.sort.each do |role|
+ users_by_role[role].sort.each do |u|
+	current_user_roles << role.id if u.id == current_user
+ end
+end
+
+current_user_permitted_roles = []
+
+restricted_members = Setting["plugin_redmine_restricted_members_managament"]
+
+current_user_roles.each do |r|
+ if restricted_members[:restricted_members_table].key?(r.to_s)
+	restricted_members[:restricted_members_table][r.to_s].each do |k, v|	
+		current_user_permitted_roles << k	
+	end 
+  end
+end
+
+current_user_permitted_roles = current_user_permitted_roles.sort.uniq
+
+%>
+
+<% roles = Role.find_all_givable
+   members = @project.member_principals.includes(:member_roles, :roles, :principal).all.sort %>
+<div class="splitcontentleft">
+<% if members.any? %>
+<table class="list members">
+  <thead>
+    <tr>
+      <th><%= l(:label_user) %> / <%= l(:label_group) %></th>
+      <th><%= l(:label_role_plural) %></th>
+      <th style="width:15%"></th>
+      <%= call_hook(:view_projects_settings_members_table_header, :project => @project) %>
+    </tr>
+  </thead>
+  <tbody>
+  <% members.each do |member| %>
+  <% next if member.new_record? %>
+  <tr id="member-<%= member.id %>" class="<%= cycle 'odd', 'even' %> member">
+  <td class="name <%= member.principal.class.name.downcase %>"><%= link_to_user member.principal %></td>
+  <td class="roles">
+    <span id="member-<%= member.id %>-roles"><%= member.roles.sort.collect(&:to_s).join(', ') %></span>
+      <%= form_for(member,
+                   {:as => :membership, :remote => true,
+                    :url => membership_path(member),
+                    :method => :put,
+                    :html => { :id => "member-#{member.id}-roles-form", :class => 'hol' }}
+             ) do |f| %>
+        <p>
+          <% roles.each do |role| %>
+        <% disabled =  member.member_roles.detect {
+                                 |mr| mr.role_id == role.id && !mr.inherited_from.nil?
+                                 } 
+	if disabled.nil?
+	 disabled =  !current_user_permitted_roles.include?(role.id.to_s) unless User.current.admin?
+	end
+  %>
+
+          <label>
+            <%= check_box_tag('membership[role_ids][]',
+                              role.id, member.roles.include?(role),
+                              :id => nil,
+				 :disabled => disabled )
+                                 %> <%= role %>
+          </label><br />
+          <% end %>
+        </p>
+        <%= hidden_field_tag 'membership[role_ids][]', '' %>
+        <p>
+          <%= submit_tag l(:button_save), :class => "small" %>
+          <%= link_to_function(l(:button_cancel),
+                               "$('#member-#{member.id}-roles').show(); $('#member-#{member.id}-roles-form').hide(); return false;") %>
+        </p>
+      <% end %>
+  </td>
+  <td class="buttons">
+      <%= link_to_function l(:button_edit),
+                           "$('#member-#{member.id}-roles').hide(); $('#member-#{member.id}-roles-form').show(); return false;",
+                           :class => 'icon icon-edit' %>
+      <%= delete_link membership_path(member),
+                      :remote => true,
+                      :data => (!User.current.admin? && member.include?(User.current) ? {:confirm => l(:text_own_membership_delete_confirmation)} : {}) if member.deletable? %>
+  </td>
+  <%= call_hook(:view_projects_settings_members_table_row, { :project => @project, :member => member}) %>
+  </tr>
+<% end; reset_cycle %>
+  </tbody>
+</table>
+<% else %>
+<p class="nodata"><%= l(:label_no_data) %></p>
+<% end %>
+</div>
+
+<div class="splitcontentright">
+<% if roles.any? %>
+  <%= form_for(@member,
+               {:as => :membership, :url => project_memberships_path(@project),
+                :remote => true, :method => :post}) do |f| %>
+    <fieldset>
+      <legend><%=l(:label_member_new)%></legend>
+      <p>
+        <%= label_tag("principal_search", l(:label_principal_search)) %>
+        <%= text_field_tag('principal_search', nil) %>
+      </p>
+      <%= javascript_tag "observeSearchfield('principal_search', null, '#{ escape_javascript autocomplete_project_memberships_path(@project, :format => 'js') }')" %>
+      <div id="principals_for_new_member">
+        <%= render_principals_for_new_members(@project) %>
+      </div>
+      <p>
+        <%= l(:label_role_plural) %>:
+        <% roles.each do |role| %>
+	 <% disabled = !current_user_permitted_roles.include?(role.id.to_s) unless User.current.admin? %> 
+          <label><%= check_box_tag 'membership[role_ids][]', role.id, false, :id => nil , :disabled => disabled %> <%= role %></label> 
+        <% end %>
+      </p>
+      <p><%= submit_tag l(:button_add), :id => 'member-add-submit' %></p>
+    </fieldset>
+  <% end %>
+<% end %>
+<%= debug current_user_permitted_roles %>
+
+</div>

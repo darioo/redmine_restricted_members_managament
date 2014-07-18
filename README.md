@@ -1,13 +1,4 @@
-Redmine Restricted Members Managament 
+redmine_improved_subtasks
 =========================
 
-Plugin for Redmine which give additional restriction for memebers with :members_managament permition
-
-You can select which roles are avaible for people with particular roles.
-
-For example:
-
-Project Manager can add: Developers, Testers, Designers Tech Leads
-Tech Leads can add only Developers
-
-
+Plugin for Redmine which improving how work priorities, start and due date and in the future Estimated Hours within Sub Task tree/

@@ -1,30 +1,7 @@
 <%= error_messages_for 'member' %>
 <% 
 
-users_by_role = @project.users_by_role 
-current_user = User.current.id
-
-current_user_roles = []
-
-users_by_role.keys.sort.each do |role|
- users_by_role[role].sort.each do |u|
-	current_user_roles << role.id if u.id == current_user
- end
-end
-
-current_user_permitted_roles = []
-
-restricted_members = Setting["plugin_redmine_restricted_members_managament"]
-
-current_user_roles.each do |r|
- if restricted_members[:restricted_members_table].key?(r.to_s)
-	restricted_members[:restricted_members_table][r.to_s].each do |k, v|	
-		current_user_permitted_roles << k	
-	end 
-  end
-end
-
-current_user_permitted_roles = current_user_permitted_roles.sort.uniq
+current_user_permitted_roles = ProjectsController.permitted_roles_for_user(User.current.id ,  @project.users_by_role)
 
 %>
 
@@ -85,10 +62,20 @@ current_user_permitted_roles = current_user_permitted_roles.sort.uniq
       <%= link_to_function l(:button_edit),
                            "$('#member-#{member.id}-roles').hide(); $('#member-#{member.id}-roles-form').show(); return false;",
                            :class => 'icon icon-edit' %>
+
+      <%
+	deletable = true
+	member.roles.each do |r|
+		deletable = false unless current_user_permitted_roles.include?(r.id.to_s)
+		break if ! deletable
+	end
+	%>
+
       <%= delete_link membership_path(member),
                       :remote => true,
-                      :data => (!User.current.admin? && member.include?(User.current) ? {:confirm => l(:text_own_membership_delete_confirmation)} : {}) if member.deletable? %>
+                      :data => (!User.current.admin? && member.include?(User.current) ? {:confirm => l(:text_own_membership_delete_confirmation)} : {}) if member.deletable? && ( deletable || User.current.admin?) %>
   </td>
+
   <%= call_hook(:view_projects_settings_members_table_row, { :project => @project, :member => member}) %>
   </tr>
 <% end; reset_cycle %>
@@ -125,6 +112,5 @@ current_user_permitted_roles = current_user_permitted_roles.sort.uniq
     </fieldset>
   <% end %>
 <% end %>
-<%= debug current_user_permitted_roles %>
 
 </div>

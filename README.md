@@ -11,4 +11,17 @@ For example, you can set:
 * Tech Leads can add only Developers
 * Admin can add all Roles
 
+Installation
+==============
+To Install this plugin goto plugins in your redmine repository
 
+Clone the git repository: 
+
+`git clone git@github.com:darioo/redmine_restricted_members_managament.git`
+
+and than restart Redmine
+
+Configuration
+==============
+
+Go to *redmine_restricted_members_managament* plugin configuration page and set all allowed roles 

@@ -52,7 +52,7 @@ current_user_permitted_roles = ProjectsController.permitted_roles_for_user(User.
         </p>
         <%= hidden_field_tag 'membership[role_ids][]', '' %>
         <p>
-          <%= submit_tag l(:button_save), :class => "small" %>
+          <%= submit_tag l(:button_save) %>
           <%= link_to_function(l(:button_cancel),
                                "$('#member-#{member.id}-roles').show(); $('#member-#{member.id}-roles-form').hide(); return false;") %>
         </p>

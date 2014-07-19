@@ -29,7 +29,10 @@ module RestrictedMembersManagament
 
 	   current_user_permitted_roles = []
 
-	   restricted_members = Setting["plugin_redmine_restricted_members_managament"]
+      	   restricted_members = Setting["plugin_redmine_restricted_members_managament"] 
+
+	   unless restricted_members.nil? 
+		unless restricted_members[:restricted_members_table].nil?
 
 	   current_user_roles.each do |r|
 	        if restricted_members[:restricted_members_table].key?(r.to_s)
@@ -38,6 +41,8 @@ module RestrictedMembersManagament
            	     end
 	            current_user_permitted_roles.uniq
       	        end
+	    end
+	    end
 	    end
 	    current_user_permitted_roles
 	end

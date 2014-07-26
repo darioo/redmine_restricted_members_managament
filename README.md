@@ -3,7 +3,7 @@ Redmine Restricted Members Managament
 
 Plugin for Redmine which give additional restriction for roles with :manage_members permission
 
-Now, you can select for each roles with that role, which roles are avaible when you are in Setting->Members site
+Now, you can select for each roles with that permission, which roles you are able to assign in Setting->Members site
 
 For example, you can set:
 

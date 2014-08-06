@@ -2,6 +2,7 @@
 <% 
 
 current_user_permitted_roles = ProjectsController.permitted_roles_for_user(User.current.id ,  @project.users_by_role)
+current_user_show_disabled   = ProjectsController.show_disabled_roles(current_user_permitted_roles)
 
 %>
 
@@ -104,8 +105,10 @@ current_user_permitted_roles = ProjectsController.permitted_roles_for_user(User.
       <p>
         <%= l(:label_role_plural) %>:
         <% roles.each do |role| %>
-	 <% disabled = !current_user_permitted_roles.include?(role.id.to_s) unless User.current.admin? %> 
+	 <% disabled = !current_user_permitted_roles.include?(role.id.to_s) unless User.current.admin? %>
+         <% if !disabled || current_user_show_disabled %>
           <label><%= check_box_tag 'membership[role_ids][]', role.id, false, :id => nil , :disabled => disabled %> <%= role %></label> 
+         <% end %>
         <% end %>
       </p>
       <p><%= submit_tag l(:button_add), :id => 'member-add-submit' %></p>

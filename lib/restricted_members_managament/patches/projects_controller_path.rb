@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 module RestrictedMembersManagament
   module Patches
     module ProjectsControllerPatch
@@ -46,9 +48,25 @@ module RestrictedMembersManagament
 	    end
 	    current_user_permitted_roles
 	end
-           
-      end
 
+	def show_disabled_roles (current_user_permitted_roles)
+		restricted_members = Setting["plugin_redmine_restricted_members_managament"]
+
+		if restricted_members.nil?
+			return false
+		end
+		if restricted_members[:restricted_members_showdisabled].nil?
+			return false
+		end
+
+		current_user_permitted_roles.each do |r|
+			if restricted_members[:restricted_members_showdisabled].key?(r.to_s)
+				return true
+			end
+		end
+		return false
+	end
+      end
     end
   end
 end

@@ -2,6 +2,7 @@
 <% 
 
 current_user_permitted_roles = ProjectsController.permitted_roles_for_user(User.current.id ,  @project.users_by_role)
+current_user_show_disabled   = ProjectsController.show_disabled_roles(current_user_permitted_roles)
 
 %>
 
@@ -25,38 +26,45 @@ current_user_permitted_roles = ProjectsController.permitted_roles_for_user(User.
   <td class="name <%= member.principal.class.name.downcase %>"><%= link_to_user member.principal %></td>
   <td class="roles">
     <span id="member-<%= member.id %>-roles"><%= member.roles.sort.collect(&:to_s).join(', ') %></span>
-      <%= form_for(member,
-                   {:as => :membership, :remote => true,
-                    :url => membership_path(member),
-                    :method => :put,
-                    :html => { :id => "member-#{member.id}-roles-form", :class => 'hol' }}
-             ) do |f| %>
-        <p>
-          <% roles.each do |role| %>
-        <% disabled =  member.member_roles.detect {
-                                 |mr| mr.role_id == role.id && !mr.inherited_from.nil?
-                                 } 
-	if disabled.nil?
-	 disabled =  !current_user_permitted_roles.include?(role.id.to_s) unless User.current.admin?
-	end
-  %>
+	<%= form_for(member,
+			{:as => :membership, :remote => true,
+			:url => membership_path(member),
+			:method => :put,
+			:html => { :id => "member-#{member.id}-roles-form", :class => 'hol' }}
+		) do |f| %>
 
-          <label>
-            <%= check_box_tag('membership[role_ids][]',
-                              role.id, member.roles.include?(role),
-                              :id => nil,
-				 :disabled => disabled )
-                                 %> <%= role %>
-          </label><br />
-          <% end %>
-        </p>
-        <%= hidden_field_tag 'membership[role_ids][]', '' %>
-        <p>
-          <%= submit_tag l(:button_save) %>
-          <%= link_to_function(l(:button_cancel),
-                               "$('#member-#{member.id}-roles').show(); $('#member-#{member.id}-roles-form').hide(); return false;") %>
-        </p>
-      <% end %>
+		<p>
+		<% roles.each do |role|
+			isofthisrole = member.member_roles.detect {
+						|mr| mr.role_id == role.id
+					} 
+
+			disabled     = member.member_roles.detect {
+						|mr| mr.role_id == role.id && !mr.inherited_from.nil?
+					} 
+
+			if disabled.nil?
+				disabled =  !current_user_permitted_roles.include?(role.id.to_s) unless User.current.admin?
+			end
+
+			if !disabled || current_user_show_disabled || isofthisrole %>
+				<label>
+				<%= check_box_tag('membership[role_ids][]',
+						role.id, member.roles.include?(role),
+						:id => nil,
+						:disabled => disabled )
+						%> <%= role %>
+				</label><br />
+			<% end %>
+		<% end %>
+		</p>
+		<%= hidden_field_tag 'membership[role_ids][]', '' %>
+		<p>
+			<%= submit_tag l(:button_save) %>
+			<%= link_to_function(l(:button_cancel),
+				"$('#member-#{member.id}-roles').show(); $('#member-#{member.id}-roles-form').hide(); return false;") %>
+		</p>
+	<% end %>
   </td>
   <td class="buttons">
       <%= link_to_function l(:button_edit),
@@ -104,8 +112,10 @@ current_user_permitted_roles = ProjectsController.permitted_roles_for_user(User.
       <p>
         <%= l(:label_role_plural) %>:
         <% roles.each do |role| %>
-	 <% disabled = !current_user_permitted_roles.include?(role.id.to_s) unless User.current.admin? %> 
+	 <% disabled = !current_user_permitted_roles.include?(role.id.to_s) unless User.current.admin? %>
+         <% if !disabled || current_user_show_disabled %>
           <label><%= check_box_tag 'membership[role_ids][]', role.id, false, :id => nil , :disabled => disabled %> <%= role %></label> 
+         <% end %>
         <% end %>
       </p>
       <p><%= submit_tag l(:button_add), :id => 'member-add-submit' %></p>
